@@ -1,10 +1,15 @@
 plugins {
     id 'java'
+    id 'application'
+    id 'org.jetbrains.kotlin.jvm' version '1.4.32'
+    id 'org.jetbrains.kotlin.kapt' version '1.4.32'
     id 'org.hidetake.swagger.generator' version '2.18.2'
 }
 
 group 'org.example'
 version '1.0-SNAPSHOT'
+
+mainClassName = "org.example.Application"
 
 repositories {
     mavenCentral()
@@ -29,6 +34,10 @@ dependencies {
     implementation "io.micronaut:micronaut-runtime"
     implementation "io.micronaut:micronaut-http-server-netty"
     implementation "io.micronaut:micronaut-http-client"
+
+    kapt platform("io.micronaut:micronaut-bom:$micronautVersion")
+    kapt "io.micronaut:micronaut-inject-java"
+    kapt "io.micronaut:micronaut-validation"
 
     implementation("com.fasterxml.jackson.core:jackson-annotations:2.12.2")
 
@@ -58,8 +67,18 @@ compileJava.dependsOn swaggerSources.petstore.code
 
 sourceSets {
     main {
+        kotlin {
+            srcDirs += files(
+                    "${rootDir}/src/main/kotlin",
+                    "${swaggerSources.petstore.code.outputDir}/src/main/java"
+            )
+        }
         java {
             srcDirs += files("${swaggerSources.petstore.code.outputDir}/src/main/java")
         }
     }
+}
+
+compileKotlin {
+    kotlinOptions.jvmTarget = "1.8"
 }
