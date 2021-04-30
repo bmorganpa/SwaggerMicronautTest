@@ -1,5 +1,6 @@
 plugins {
     id 'java'
+    id 'org.hidetake.swagger.generator' version '2.18.2'
 }
 
 group 'org.example'
@@ -9,11 +10,56 @@ repositories {
     mavenCentral()
 }
 
+ext {
+    micronautVersion = "2.4.2"
+}
+
 dependencies {
+    swaggerCodegen 'io.swagger.codegen.v3:swagger-codegen-cli:3.0.25'
+    implementation "io.swagger.core.v3:swagger-annotations"
+
+    annotationProcessor platform("io.micronaut:micronaut-bom:$micronautVersion")
+    annotationProcessor "io.micronaut:micronaut-inject-java"
+    annotationProcessor "io.micronaut:micronaut-validation"
+    annotationProcessor "io.micronaut.configuration:micronaut-openapi" // Needed?
+
+    implementation platform("io.micronaut:micronaut-bom:$micronautVersion")
+    implementation "io.micronaut:micronaut-inject"
+    implementation "io.micronaut:micronaut-validation"
+    implementation "io.micronaut:micronaut-runtime"
+    implementation "io.micronaut:micronaut-http-server-netty"
+    implementation "io.micronaut:micronaut-http-client"
+
+    implementation("com.fasterxml.jackson.core:jackson-annotations:2.12.2")
+
+    runtimeOnly "ch.qos.logback:logback-classic:1.2.3"
+
     testImplementation 'org.junit.jupiter:junit-jupiter-api:5.6.0'
     testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine'
 }
 
 test {
     useJUnitPlatform()
+}
+
+swaggerSources {
+    petstore {
+        inputFile = file('petstore.yaml')
+        code {
+            language = 'micronaut'
+            outputDir = file('swaggergen')
+            configFile = file("$rootDir/swagger-config.json")
+            components = ['models', 'apis']
+        }
+    }
+}
+
+compileJava.dependsOn swaggerSources.petstore.code
+
+sourceSets {
+    main {
+        java {
+            srcDirs += files("${swaggerSources.petstore.code.outputDir}/src/main/java")
+        }
+    }
 }
